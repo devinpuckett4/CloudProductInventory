@@ -1,8 +1,24 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="text-center mt-5">
+
+    <h1>Cloud Product Inventory</h1>
+
+    <p>
+        Welcome to the Cloud Product Inventory application.
+    </p>
+
+    <p>
+        This application allows users to view and manage product inventory stored
+        in a MySQL database.
+    </p>
+
+    <a asp-controller="Product"
+       asp-action="Index"
+       class="btn btn-primary">
+        View Products
+    </a>
+
 </div>

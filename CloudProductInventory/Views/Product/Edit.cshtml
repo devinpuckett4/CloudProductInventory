@@ -1,5 +1,55 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model CloudProductInventory.Models.Product
+
 @{
+    ViewData["Title"] = "Edit Product";
 }
+
+<div class="container mt-4">
+
+    <h1 class="mb-4">Edit Product</h1>
+
+    <form asp-action="Edit" method="post">
+
+        <input type="hidden" asp-for="ProductID" />
+
+        <div class="mb-3">
+            <label asp-for="Name" class="form-label"></label>
+            <input asp-for="Name" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label"></label>
+            <input asp-for="Description" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Price" class="form-label"></label>
+            <input asp-for="Price" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Quantity" class="form-label"></label>
+            <input asp-for="Quantity" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Category" class="form-label"></label>
+            <input asp-for="Category" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="ImageURL" class="form-label">Image URL</label>
+            <input asp-for="ImageURL" class="form-control" />
+        </div>
+
+        <button type="submit" class="btn btn-warning">
+            Update Product
+        </button>
+
+        <a asp-action="Index" class="btn btn-secondary">
+            Cancel
+        </a>
+
+    </form>
+
+</div>
