@@ -11,7 +11,8 @@ namespace CloudProductInventory.Data
         public ProductsDAO(IConfiguration configuration)
         {
             connectionString = configuration.GetConnectionString("DefaultConnection")
-                ?? throw new InvalidOperationException("Database connection string was not found.");
+                ?? throw new InvalidOperationException(
+                    "Database connection string was not found.");
         }
 
         // READ - Get all products
@@ -19,11 +20,12 @@ namespace CloudProductInventory.Data
         {
             List<Product> products = new List<Product>();
 
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            using (MySqlConnection conn =
+                   new MySqlConnection(connectionString))
             {
                 conn.Open();
 
-                string sql = "SELECT * FROM Products";
+                string sql = "SELECT * FROM products";
 
                 using (MySqlCommand cmd = new MySqlCommand(sql, conn))
                 using (MySqlDataReader reader = cmd.ExecuteReader())
@@ -32,13 +34,26 @@ namespace CloudProductInventory.Data
                     {
                         Product product = new Product
                         {
-                            ProductID = Convert.ToInt32(reader["ProductID"]),
-                            Name = reader["Name"].ToString() ?? "",
-                            Description = reader["Description"].ToString() ?? "",
-                            Price = Convert.ToDecimal(reader["Price"]),
-                            Quantity = Convert.ToInt32(reader["Quantity"]),
-                            Category = reader["Category"].ToString() ?? "",
-                            ImageURL = reader["ImageURL"].ToString() ?? ""
+                            ProductID =
+                                Convert.ToInt32(reader["ProductID"]),
+
+                            Name =
+                                reader["Name"].ToString() ?? "",
+
+                            Description =
+                                reader["Description"].ToString() ?? "",
+
+                            Price =
+                                Convert.ToDecimal(reader["Price"]),
+
+                            Quantity =
+                                Convert.ToInt32(reader["Quantity"]),
+
+                            Category =
+                                reader["Category"].ToString() ?? "",
+
+                            ImageURL =
+                                reader["ImageURL"].ToString() ?? ""
                         };
 
                         products.Add(product);
@@ -52,23 +67,56 @@ namespace CloudProductInventory.Data
         // CREATE - Add one product
         public void AddProduct(Product product)
         {
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            using (MySqlConnection conn =
+                   new MySqlConnection(connectionString))
             {
                 conn.Open();
 
-                string sql = @"INSERT INTO Products
-                               (Name, Description, Price, Quantity, Category, ImageURL)
-                               VALUES
-                               (@Name, @Description, @Price, @Quantity, @Category, @ImageURL)";
+                string sql = @"
+                    INSERT INTO products
+                    (
+                        Name,
+                        Description,
+                        Price,
+                        Quantity,
+                        Category,
+                        ImageURL
+                    )
+                    VALUES
+                    (
+                        @Name,
+                        @Description,
+                        @Price,
+                        @Quantity,
+                        @Category,
+                        @ImageURL
+                    )";
 
                 using (MySqlCommand cmd = new MySqlCommand(sql, conn))
                 {
-                    cmd.Parameters.AddWithValue("@Name", product.Name);
-                    cmd.Parameters.AddWithValue("@Description", product.Description);
-                    cmd.Parameters.AddWithValue("@Price", product.Price);
-                    cmd.Parameters.AddWithValue("@Quantity", product.Quantity);
-                    cmd.Parameters.AddWithValue("@Category", product.Category);
-                    cmd.Parameters.AddWithValue("@ImageURL", product.ImageURL ?? "");
+                    cmd.Parameters.AddWithValue(
+                        "@Name",
+                        product.Name);
+
+                    cmd.Parameters.AddWithValue(
+                        "@Description",
+                        product.Description);
+
+                    cmd.Parameters.AddWithValue(
+                        "@Price",
+                        product.Price);
+
+                    cmd.Parameters.AddWithValue(
+                        "@Quantity",
+                        product.Quantity);
+
+                    cmd.Parameters.AddWithValue(
+                        "@Category",
+                        product.Category);
+
+                    cmd.Parameters.AddWithValue(
+                        "@ImageURL",
+                        product.ImageURL ?? "");
 
                     cmd.ExecuteNonQuery();
                 }
@@ -80,15 +128,21 @@ namespace CloudProductInventory.Data
         {
             Product? product = null;
 
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            using (MySqlConnection conn =
+                   new MySqlConnection(connectionString))
             {
                 conn.Open();
 
-                string sql = "SELECT * FROM Products WHERE ProductID = @ProductID";
+                string sql = @"
+                    SELECT *
+                    FROM products
+                    WHERE ProductID = @ProductID";
 
                 using (MySqlCommand cmd = new MySqlCommand(sql, conn))
                 {
-                    cmd.Parameters.AddWithValue("@ProductID", id);
+                    cmd.Parameters.AddWithValue(
+                        "@ProductID",
+                        id);
 
                     using (MySqlDataReader reader = cmd.ExecuteReader())
                     {
@@ -96,13 +150,29 @@ namespace CloudProductInventory.Data
                         {
                             product = new Product
                             {
-                                ProductID = Convert.ToInt32(reader["ProductID"]),
-                                Name = reader["Name"].ToString() ?? "",
-                                Description = reader["Description"].ToString() ?? "",
-                                Price = Convert.ToDecimal(reader["Price"]),
-                                Quantity = Convert.ToInt32(reader["Quantity"]),
-                                Category = reader["Category"].ToString() ?? "",
-                                ImageURL = reader["ImageURL"].ToString() ?? ""
+                                ProductID =
+                                    Convert.ToInt32(
+                                        reader["ProductID"]),
+
+                                Name =
+                                    reader["Name"].ToString() ?? "",
+
+                                Description =
+                                    reader["Description"].ToString() ?? "",
+
+                                Price =
+                                    Convert.ToDecimal(
+                                        reader["Price"]),
+
+                                Quantity =
+                                    Convert.ToInt32(
+                                        reader["Quantity"]),
+
+                                Category =
+                                    reader["Category"].ToString() ?? "",
+
+                                ImageURL =
+                                    reader["ImageURL"].ToString() ?? ""
                             };
                         }
                     }
@@ -115,28 +185,51 @@ namespace CloudProductInventory.Data
         // UPDATE - Save changes to one product
         public void UpdateProduct(Product product)
         {
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            using (MySqlConnection conn =
+                   new MySqlConnection(connectionString))
             {
                 conn.Open();
 
-                string sql = @"UPDATE Products
-                               SET Name = @Name,
-                                   Description = @Description,
-                                   Price = @Price,
-                                   Quantity = @Quantity,
-                                   Category = @Category,
-                                   ImageURL = @ImageURL
-                               WHERE ProductID = @ProductID";
+                string sql = @"
+                    UPDATE products
+                    SET
+                        Name = @Name,
+                        Description = @Description,
+                        Price = @Price,
+                        Quantity = @Quantity,
+                        Category = @Category,
+                        ImageURL = @ImageURL
+                    WHERE ProductID = @ProductID";
 
                 using (MySqlCommand cmd = new MySqlCommand(sql, conn))
                 {
-                    cmd.Parameters.AddWithValue("@ProductID", product.ProductID);
-                    cmd.Parameters.AddWithValue("@Name", product.Name);
-                    cmd.Parameters.AddWithValue("@Description", product.Description);
-                    cmd.Parameters.AddWithValue("@Price", product.Price);
-                    cmd.Parameters.AddWithValue("@Quantity", product.Quantity);
-                    cmd.Parameters.AddWithValue("@Category", product.Category);
-                    cmd.Parameters.AddWithValue("@ImageURL", product.ImageURL ?? "");
+                    cmd.Parameters.AddWithValue(
+                        "@ProductID",
+                        product.ProductID);
+
+                    cmd.Parameters.AddWithValue(
+                        "@Name",
+                        product.Name);
+
+                    cmd.Parameters.AddWithValue(
+                        "@Description",
+                        product.Description);
+
+                    cmd.Parameters.AddWithValue(
+                        "@Price",
+                        product.Price);
+
+                    cmd.Parameters.AddWithValue(
+                        "@Quantity",
+                        product.Quantity);
+
+                    cmd.Parameters.AddWithValue(
+                        "@Category",
+                        product.Category);
+
+                    cmd.Parameters.AddWithValue(
+                        "@ImageURL",
+                        product.ImageURL ?? "");
 
                     cmd.ExecuteNonQuery();
                 }
@@ -146,15 +239,20 @@ namespace CloudProductInventory.Data
         // DELETE - Remove one product
         public void DeleteProduct(int id)
         {
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            using (MySqlConnection conn =
+                   new MySqlConnection(connectionString))
             {
                 conn.Open();
 
-                string sql = "DELETE FROM Products WHERE ProductID = @ProductID";
+                string sql = @"
+                    DELETE FROM products
+                    WHERE ProductID = @ProductID";
 
                 using (MySqlCommand cmd = new MySqlCommand(sql, conn))
                 {
-                    cmd.Parameters.AddWithValue("@ProductID", id);
+                    cmd.Parameters.AddWithValue(
+                        "@ProductID",
+                        id);
 
                     cmd.ExecuteNonQuery();
                 }
