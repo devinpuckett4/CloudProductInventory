@@ -1,7 +1,6 @@
 ﻿using CloudProductInventory.Data;
 using CloudProductInventory.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 
 namespace CloudProductInventory.Controllers
 {
@@ -9,9 +8,9 @@ namespace CloudProductInventory.Controllers
     {
         private readonly ProductsDAO productsDAO;
 
-        public ProductController(IConfiguration configuration)
+        public ProductController(ProductsDAO productsDAO)
         {
-            productsDAO = new ProductsDAO(configuration);
+            this.productsDAO = productsDAO;
         }
 
         // READ - Show all products
@@ -44,11 +43,11 @@ namespace CloudProductInventory.Controllers
             return View(product);
         }
 
-        // EDIT - Get one product and show its current information
+        // EDIT - Show the current product information
         [HttpGet]
         public IActionResult Edit(int id)
         {
-            Product product = productsDAO.GetProductById(id);
+            Product? product = productsDAO.GetProductById(id);
 
             if (product == null)
             {
@@ -72,7 +71,8 @@ namespace CloudProductInventory.Controllers
 
             return View(product);
         }
-        // DELETE - Show confirmation page
+
+        // DELETE - Show the confirmation page
         [HttpGet]
         public IActionResult Delete(int id)
         {
@@ -86,7 +86,7 @@ namespace CloudProductInventory.Controllers
             return View(product);
         }
 
-        // DELETE - Remove product after confirmation
+        // DELETE - Remove the product
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public IActionResult DeleteConfirmed(int id)

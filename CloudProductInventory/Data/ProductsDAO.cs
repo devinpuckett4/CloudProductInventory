@@ -1,5 +1,6 @@
 ﻿using CloudProductInventory.Models;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 
 namespace CloudProductInventory.Data
@@ -7,148 +8,48 @@ namespace CloudProductInventory.Data
     public class ProductsDAO
     {
         private readonly string connectionString;
+        private readonly ILogger<ProductsDAO> logger;
 
-        public ProductsDAO(IConfiguration configuration)
+        public ProductsDAO(
+            IConfiguration configuration,
+            ILogger<ProductsDAO> logger)
         {
-            connectionString = configuration.GetConnectionString("DefaultConnection")
+            connectionString =
+                configuration.GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException(
                     "Database connection string was not found.");
+
+            this.logger = logger;
         }
 
         // READ - Get all products
         public List<Product> GetAllProducts()
         {
-            List<Product> products = new List<Product>();
+            logger.LogInformation(
+                "{Timestamp} | ENTRY | {ClassName}.{MethodName}",
+                DateTime.UtcNow.ToString("O"),
+                nameof(ProductsDAO),
+                nameof(GetAllProducts));
 
-            using (MySqlConnection conn =
-                   new MySqlConnection(connectionString))
+            try
             {
-                conn.Open();
+                List<Product> products = new List<Product>();
 
-                string sql = "SELECT * FROM products";
-
-                using (MySqlCommand cmd = new MySqlCommand(sql, conn))
-                using (MySqlDataReader reader = cmd.ExecuteReader())
+                using (MySqlConnection conn =
+                       new MySqlConnection(connectionString))
                 {
-                    while (reader.Read())
+                    conn.Open();
+
+                    string sql = "SELECT * FROM products";
+
+                    using (MySqlCommand cmd =
+                           new MySqlCommand(sql, conn))
+                    using (MySqlDataReader reader =
+                           cmd.ExecuteReader())
                     {
-                        Product product = new Product
+                        while (reader.Read())
                         {
-                            ProductID =
-                                Convert.ToInt32(reader["ProductID"]),
-
-                            Name =
-                                reader["Name"].ToString() ?? "",
-
-                            Description =
-                                reader["Description"].ToString() ?? "",
-
-                            Price =
-                                Convert.ToDecimal(reader["Price"]),
-
-                            Quantity =
-                                Convert.ToInt32(reader["Quantity"]),
-
-                            Category =
-                                reader["Category"].ToString() ?? "",
-
-                            ImageURL =
-                                reader["ImageURL"].ToString() ?? ""
-                        };
-
-                        products.Add(product);
-                    }
-                }
-            }
-
-            return products;
-        }
-
-        // CREATE - Add one product
-        public void AddProduct(Product product)
-        {
-            using (MySqlConnection conn =
-                   new MySqlConnection(connectionString))
-            {
-                conn.Open();
-
-                string sql = @"
-                    INSERT INTO products
-                    (
-                        Name,
-                        Description,
-                        Price,
-                        Quantity,
-                        Category,
-                        ImageURL
-                    )
-                    VALUES
-                    (
-                        @Name,
-                        @Description,
-                        @Price,
-                        @Quantity,
-                        @Category,
-                        @ImageURL
-                    )";
-
-                using (MySqlCommand cmd = new MySqlCommand(sql, conn))
-                {
-                    cmd.Parameters.AddWithValue(
-                        "@Name",
-                        product.Name);
-
-                    cmd.Parameters.AddWithValue(
-                        "@Description",
-                        product.Description);
-
-                    cmd.Parameters.AddWithValue(
-                        "@Price",
-                        product.Price);
-
-                    cmd.Parameters.AddWithValue(
-                        "@Quantity",
-                        product.Quantity);
-
-                    cmd.Parameters.AddWithValue(
-                        "@Category",
-                        product.Category);
-
-                    cmd.Parameters.AddWithValue(
-                        "@ImageURL",
-                        product.ImageURL ?? "");
-
-                    cmd.ExecuteNonQuery();
-                }
-            }
-        }
-
-        // READ ONE - Get one product for Edit or Delete
-        public Product? GetProductById(int id)
-        {
-            Product? product = null;
-
-            using (MySqlConnection conn =
-                   new MySqlConnection(connectionString))
-            {
-                conn.Open();
-
-                string sql = @"
-                    SELECT *
-                    FROM products
-                    WHERE ProductID = @ProductID";
-
-                using (MySqlCommand cmd = new MySqlCommand(sql, conn))
-                {
-                    cmd.Parameters.AddWithValue(
-                        "@ProductID",
-                        id);
-
-                    using (MySqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            product = new Product
+                            Product product = new Product
                             {
                                 ProductID =
                                     Convert.ToInt32(
@@ -174,88 +75,353 @@ namespace CloudProductInventory.Data
                                 ImageURL =
                                     reader["ImageURL"].ToString() ?? ""
                             };
+
+                            products.Add(product);
                         }
                     }
                 }
-            }
 
-            return product;
+                logger.LogInformation(
+                    "{Timestamp} | EXIT | {ClassName}.{MethodName} | ProductsReturned: {ProductCount}",
+                    DateTime.UtcNow.ToString("O"),
+                    nameof(ProductsDAO),
+                    nameof(GetAllProducts),
+                    products.Count);
+
+                return products;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(
+                    ex,
+                    "{Timestamp} | EXCEPTION | {ClassName}.{MethodName} | {ErrorMessage}",
+                    DateTime.UtcNow.ToString("O"),
+                    nameof(ProductsDAO),
+                    nameof(GetAllProducts),
+                    ex.Message);
+
+                throw;
+            }
+        }
+
+        // CREATE - Add one product
+        public void AddProduct(Product product)
+        {
+            logger.LogInformation(
+                "{Timestamp} | ENTRY | {ClassName}.{MethodName}",
+                DateTime.UtcNow.ToString("O"),
+                nameof(ProductsDAO),
+                nameof(AddProduct));
+
+            try
+            {
+                using (MySqlConnection conn =
+                       new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    string sql = @"
+                        INSERT INTO products
+                        (
+                            Name,
+                            Description,
+                            Price,
+                            Quantity,
+                            Category,
+                            ImageURL
+                        )
+                        VALUES
+                        (
+                            @Name,
+                            @Description,
+                            @Price,
+                            @Quantity,
+                            @Category,
+                            @ImageURL
+                        )";
+
+                    using (MySqlCommand cmd =
+                           new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue(
+                            "@Name",
+                            product.Name);
+
+                        cmd.Parameters.AddWithValue(
+                            "@Description",
+                            product.Description);
+
+                        cmd.Parameters.AddWithValue(
+                            "@Price",
+                            product.Price);
+
+                        cmd.Parameters.AddWithValue(
+                            "@Quantity",
+                            product.Quantity);
+
+                        cmd.Parameters.AddWithValue(
+                            "@Category",
+                            product.Category);
+
+                        cmd.Parameters.AddWithValue(
+                            "@ImageURL",
+                            product.ImageURL ?? "");
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+
+                        logger.LogInformation(
+                            "{Timestamp} | EXIT | {ClassName}.{MethodName} | RowsAffected: {RowsAffected}",
+                            DateTime.UtcNow.ToString("O"),
+                            nameof(ProductsDAO),
+                            nameof(AddProduct),
+                            rowsAffected);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(
+                    ex,
+                    "{Timestamp} | EXCEPTION | {ClassName}.{MethodName} | {ErrorMessage}",
+                    DateTime.UtcNow.ToString("O"),
+                    nameof(ProductsDAO),
+                    nameof(AddProduct),
+                    ex.Message);
+
+                throw;
+            }
+        }
+
+        // READ ONE - Get one product for Edit or Delete
+        public Product? GetProductById(int id)
+        {
+            logger.LogInformation(
+                "{Timestamp} | ENTRY | {ClassName}.{MethodName} | ProductID: {ProductID}",
+                DateTime.UtcNow.ToString("O"),
+                nameof(ProductsDAO),
+                nameof(GetProductById),
+                id);
+
+            try
+            {
+                Product? product = null;
+
+                using (MySqlConnection conn =
+                       new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    string sql = @"
+                        SELECT *
+                        FROM products
+                        WHERE ProductID = @ProductID";
+
+                    using (MySqlCommand cmd =
+                           new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue(
+                            "@ProductID",
+                            id);
+
+                        using (MySqlDataReader reader =
+                               cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                product = new Product
+                                {
+                                    ProductID =
+                                        Convert.ToInt32(
+                                            reader["ProductID"]),
+
+                                    Name =
+                                        reader["Name"].ToString() ?? "",
+
+                                    Description =
+                                        reader["Description"].ToString() ?? "",
+
+                                    Price =
+                                        Convert.ToDecimal(
+                                            reader["Price"]),
+
+                                    Quantity =
+                                        Convert.ToInt32(
+                                            reader["Quantity"]),
+
+                                    Category =
+                                        reader["Category"].ToString() ?? "",
+
+                                    ImageURL =
+                                        reader["ImageURL"].ToString() ?? ""
+                                };
+                            }
+                        }
+                    }
+                }
+
+                logger.LogInformation(
+                    "{Timestamp} | EXIT | {ClassName}.{MethodName} | ProductID: {ProductID} | Found: {ProductFound}",
+                    DateTime.UtcNow.ToString("O"),
+                    nameof(ProductsDAO),
+                    nameof(GetProductById),
+                    id,
+                    product != null);
+
+                return product;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(
+                    ex,
+                    "{Timestamp} | EXCEPTION | {ClassName}.{MethodName} | ProductID: {ProductID} | {ErrorMessage}",
+                    DateTime.UtcNow.ToString("O"),
+                    nameof(ProductsDAO),
+                    nameof(GetProductById),
+                    id,
+                    ex.Message);
+
+                throw;
+            }
         }
 
         // UPDATE - Save changes to one product
         public void UpdateProduct(Product product)
         {
-            using (MySqlConnection conn =
-                   new MySqlConnection(connectionString))
+            logger.LogInformation(
+                "{Timestamp} | ENTRY | {ClassName}.{MethodName} | ProductID: {ProductID}",
+                DateTime.UtcNow.ToString("O"),
+                nameof(ProductsDAO),
+                nameof(UpdateProduct),
+                product.ProductID);
+
+            try
             {
-                conn.Open();
-
-                string sql = @"
-                    UPDATE products
-                    SET
-                        Name = @Name,
-                        Description = @Description,
-                        Price = @Price,
-                        Quantity = @Quantity,
-                        Category = @Category,
-                        ImageURL = @ImageURL
-                    WHERE ProductID = @ProductID";
-
-                using (MySqlCommand cmd = new MySqlCommand(sql, conn))
+                using (MySqlConnection conn =
+                       new MySqlConnection(connectionString))
                 {
-                    cmd.Parameters.AddWithValue(
-                        "@ProductID",
-                        product.ProductID);
+                    conn.Open();
 
-                    cmd.Parameters.AddWithValue(
-                        "@Name",
-                        product.Name);
+                    string sql = @"
+                        UPDATE products
+                        SET
+                            Name = @Name,
+                            Description = @Description,
+                            Price = @Price,
+                            Quantity = @Quantity,
+                            Category = @Category,
+                            ImageURL = @ImageURL
+                        WHERE ProductID = @ProductID";
 
-                    cmd.Parameters.AddWithValue(
-                        "@Description",
-                        product.Description);
+                    using (MySqlCommand cmd =
+                           new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue(
+                            "@ProductID",
+                            product.ProductID);
 
-                    cmd.Parameters.AddWithValue(
-                        "@Price",
-                        product.Price);
+                        cmd.Parameters.AddWithValue(
+                            "@Name",
+                            product.Name);
 
-                    cmd.Parameters.AddWithValue(
-                        "@Quantity",
-                        product.Quantity);
+                        cmd.Parameters.AddWithValue(
+                            "@Description",
+                            product.Description);
 
-                    cmd.Parameters.AddWithValue(
-                        "@Category",
-                        product.Category);
+                        cmd.Parameters.AddWithValue(
+                            "@Price",
+                            product.Price);
 
-                    cmd.Parameters.AddWithValue(
-                        "@ImageURL",
-                        product.ImageURL ?? "");
+                        cmd.Parameters.AddWithValue(
+                            "@Quantity",
+                            product.Quantity);
 
-                    cmd.ExecuteNonQuery();
+                        cmd.Parameters.AddWithValue(
+                            "@Category",
+                            product.Category);
+
+                        cmd.Parameters.AddWithValue(
+                            "@ImageURL",
+                            product.ImageURL ?? "");
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+
+                        logger.LogInformation(
+                            "{Timestamp} | EXIT | {ClassName}.{MethodName} | ProductID: {ProductID} | RowsAffected: {RowsAffected}",
+                            DateTime.UtcNow.ToString("O"),
+                            nameof(ProductsDAO),
+                            nameof(UpdateProduct),
+                            product.ProductID,
+                            rowsAffected);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(
+                    ex,
+                    "{Timestamp} | EXCEPTION | {ClassName}.{MethodName} | ProductID: {ProductID} | {ErrorMessage}",
+                    DateTime.UtcNow.ToString("O"),
+                    nameof(ProductsDAO),
+                    nameof(UpdateProduct),
+                    product.ProductID,
+                    ex.Message);
+
+                throw;
             }
         }
 
         // DELETE - Remove one product
         public void DeleteProduct(int id)
         {
-            using (MySqlConnection conn =
-                   new MySqlConnection(connectionString))
+            logger.LogInformation(
+                "{Timestamp} | ENTRY | {ClassName}.{MethodName} | ProductID: {ProductID}",
+                DateTime.UtcNow.ToString("O"),
+                nameof(ProductsDAO),
+                nameof(DeleteProduct),
+                id);
+
+            try
             {
-                conn.Open();
-
-                string sql = @"
-                    DELETE FROM products
-                    WHERE ProductID = @ProductID";
-
-                using (MySqlCommand cmd = new MySqlCommand(sql, conn))
+                using (MySqlConnection conn =
+                       new MySqlConnection(connectionString))
                 {
-                    cmd.Parameters.AddWithValue(
-                        "@ProductID",
-                        id);
+                    conn.Open();
 
-                    cmd.ExecuteNonQuery();
+                    string sql = @"
+                        DELETE FROM products
+                        WHERE ProductID = @ProductID";
+
+                    using (MySqlCommand cmd =
+                           new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue(
+                            "@ProductID",
+                            id);
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+
+                        logger.LogInformation(
+                            "{Timestamp} | EXIT | {ClassName}.{MethodName} | ProductID: {ProductID} | RowsAffected: {RowsAffected}",
+                            DateTime.UtcNow.ToString("O"),
+                            nameof(ProductsDAO),
+                            nameof(DeleteProduct),
+                            id,
+                            rowsAffected);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(
+                    ex,
+                    "{Timestamp} | EXCEPTION | {ClassName}.{MethodName} | ProductID: {ProductID} | {ErrorMessage}",
+                    DateTime.UtcNow.ToString("O"),
+                    nameof(ProductsDAO),
+                    nameof(DeleteProduct),
+                    id,
+                    ex.Message);
+
+                throw;
             }
         }
     }

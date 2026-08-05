@@ -1,3 +1,6 @@
+using CloudProductInventory.Data;
+using CloudProductInventory.Filters;
+
 namespace CloudProductInventory
 {
     public class Program
@@ -6,8 +9,12 @@ namespace CloudProductInventory
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
-            builder.Services.AddControllersWithViews();
+            builder.Services.AddControllersWithViews(options =>
+            {
+                options.Filters.Add<LoggingActionFilter>();
+            });
+
+            builder.Services.AddScoped<ProductsDAO>();
 
             var app = builder.Build();
 
