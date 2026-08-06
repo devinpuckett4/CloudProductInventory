@@ -14,12 +14,65 @@ namespace CloudProductInventory.Data
             IConfiguration configuration,
             ILogger<ProductsDAO> logger)
         {
-            connectionString =
-                configuration.GetConnectionString("DefaultConnection")
-                ?? throw new InvalidOperationException(
-                    "Database connection string was not found.");
-
             this.logger = logger;
+
+            string? jawsDbUrl =
+                configuration["JAWSDB_URL"];
+
+            if (!string.IsNullOrWhiteSpace(jawsDbUrl))
+            {
+                if (!Uri.TryCreate(
+                    jawsDbUrl,
+                    UriKind.Absolute,
+                    out Uri? databaseUri))
+                {
+                    throw new InvalidOperationException(
+                        "The JAWSDB_URL value is not valid.");
+                }
+
+                string[] userInfo =
+                    databaseUri.UserInfo.Split(':', 2);
+
+                if (userInfo.Length != 2)
+                {
+                    throw new InvalidOperationException(
+                        "The JAWSDB_URL credentials are not valid.");
+                }
+
+                int port =
+                    databaseUri.Port > 0
+                    ? databaseUri.Port
+                    : 3306;
+
+                MySqlConnectionStringBuilder builder =
+                    new MySqlConnectionStringBuilder
+                    {
+                        Server = databaseUri.Host,
+
+                        Port = (uint)port,
+
+                        UserID = Uri.UnescapeDataString(
+                            userInfo[0]),
+
+                        Password = Uri.UnescapeDataString(
+                            userInfo[1]),
+
+                        Database = Uri.UnescapeDataString(
+                            databaseUri.AbsolutePath.TrimStart('/')),
+
+                        SslMode = MySqlSslMode.Preferred
+                    };
+
+                connectionString = builder.ConnectionString;
+            }
+            else
+            {
+                connectionString =
+                    configuration.GetConnectionString(
+                        "DefaultConnection")
+                    ?? throw new InvalidOperationException(
+                        "Database connection string was not found.");
+            }
         }
 
         // READ - Get all products
@@ -33,14 +86,16 @@ namespace CloudProductInventory.Data
 
             try
             {
-                List<Product> products = new List<Product>();
+                List<Product> products =
+                    new List<Product>();
 
                 using (MySqlConnection conn =
                        new MySqlConnection(connectionString))
                 {
                     conn.Open();
 
-                    string sql = "SELECT * FROM products";
+                    string sql =
+                        "SELECT * FROM products";
 
                     using (MySqlCommand cmd =
                            new MySqlCommand(sql, conn))
@@ -49,32 +104,37 @@ namespace CloudProductInventory.Data
                     {
                         while (reader.Read())
                         {
-                            Product product = new Product
-                            {
-                                ProductID =
-                                    Convert.ToInt32(
-                                        reader["ProductID"]),
+                            Product product =
+                                new Product
+                                {
+                                    ProductID =
+                                        Convert.ToInt32(
+                                            reader["ProductID"]),
 
-                                Name =
-                                    reader["Name"].ToString() ?? "",
+                                    Name =
+                                        reader["Name"]
+                                            .ToString() ?? "",
 
-                                Description =
-                                    reader["Description"].ToString() ?? "",
+                                    Description =
+                                        reader["Description"]
+                                            .ToString() ?? "",
 
-                                Price =
-                                    Convert.ToDecimal(
-                                        reader["Price"]),
+                                    Price =
+                                        Convert.ToDecimal(
+                                            reader["Price"]),
 
-                                Quantity =
-                                    Convert.ToInt32(
-                                        reader["Quantity"]),
+                                    Quantity =
+                                        Convert.ToInt32(
+                                            reader["Quantity"]),
 
-                                Category =
-                                    reader["Category"].ToString() ?? "",
+                                    Category =
+                                        reader["Category"]
+                                            .ToString() ?? "",
 
-                                ImageURL =
-                                    reader["ImageURL"].ToString() ?? ""
-                            };
+                                    ImageURL =
+                                        reader["ImageURL"]
+                                            .ToString() ?? ""
+                                };
 
                             products.Add(product);
                         }
@@ -167,7 +227,8 @@ namespace CloudProductInventory.Data
                             "@ImageURL",
                             product.ImageURL ?? "");
 
-                        int rowsAffected = cmd.ExecuteNonQuery();
+                        int rowsAffected =
+                            cmd.ExecuteNonQuery();
 
                         logger.LogInformation(
                             "{Timestamp} | EXIT | {ClassName}.{MethodName} | RowsAffected: {RowsAffected}",
@@ -228,32 +289,37 @@ namespace CloudProductInventory.Data
                         {
                             if (reader.Read())
                             {
-                                product = new Product
-                                {
-                                    ProductID =
-                                        Convert.ToInt32(
-                                            reader["ProductID"]),
+                                product =
+                                    new Product
+                                    {
+                                        ProductID =
+                                            Convert.ToInt32(
+                                                reader["ProductID"]),
 
-                                    Name =
-                                        reader["Name"].ToString() ?? "",
+                                        Name =
+                                            reader["Name"]
+                                                .ToString() ?? "",
 
-                                    Description =
-                                        reader["Description"].ToString() ?? "",
+                                        Description =
+                                            reader["Description"]
+                                                .ToString() ?? "",
 
-                                    Price =
-                                        Convert.ToDecimal(
-                                            reader["Price"]),
+                                        Price =
+                                            Convert.ToDecimal(
+                                                reader["Price"]),
 
-                                    Quantity =
-                                        Convert.ToInt32(
-                                            reader["Quantity"]),
+                                        Quantity =
+                                            Convert.ToInt32(
+                                                reader["Quantity"]),
 
-                                    Category =
-                                        reader["Category"].ToString() ?? "",
+                                        Category =
+                                            reader["Category"]
+                                                .ToString() ?? "",
 
-                                    ImageURL =
-                                        reader["ImageURL"].ToString() ?? ""
-                                };
+                                        ImageURL =
+                                            reader["ImageURL"]
+                                                .ToString() ?? ""
+                                    };
                             }
                         }
                     }
@@ -343,7 +409,8 @@ namespace CloudProductInventory.Data
                             "@ImageURL",
                             product.ImageURL ?? "");
 
-                        int rowsAffected = cmd.ExecuteNonQuery();
+                        int rowsAffected =
+                            cmd.ExecuteNonQuery();
 
                         logger.LogInformation(
                             "{Timestamp} | EXIT | {ClassName}.{MethodName} | ProductID: {ProductID} | RowsAffected: {RowsAffected}",
@@ -398,7 +465,8 @@ namespace CloudProductInventory.Data
                             "@ProductID",
                             id);
 
-                        int rowsAffected = cmd.ExecuteNonQuery();
+                        int rowsAffected =
+                            cmd.ExecuteNonQuery();
 
                         logger.LogInformation(
                             "{Timestamp} | EXIT | {ClassName}.{MethodName} | ProductID: {ProductID} | RowsAffected: {RowsAffected}",
